@@ -1,6 +1,9 @@
 import struct
+
+import numpy
 import numpy as np
 import gzip
+
 try:
     from simple_ml_ext import *
 except:
@@ -76,11 +79,12 @@ def softmax_loss(Z, y):
         Average softmax loss over the sample.
     """
     ### BEGIN YOUR CODE
-    pass
+    return np.average(np.log(np.sum(np.exp(Z), axis=1)) - Z[np.arange(y.size), y])
+
     ### END YOUR CODE
 
 
-def softmax_regression_epoch(X, y, theta, lr = 0.1, batch=100):
+def softmax_regression_epoch(X, y, theta, lr=0.1, batch=100):
     """ Run a single epoch of SGD for softmax regression on the data, using
     the step size lr and specified batch size.  This function should modify the
     theta matrix in place, and you should iterate through batches in X _without_
@@ -99,11 +103,20 @@ def softmax_regression_epoch(X, y, theta, lr = 0.1, batch=100):
         None
     """
     ### BEGIN YOUR CODE
-    pass
+    for i in range(0, X.shape[0], batch):
+        X_batch = X[i:(i + batch), :]
+        y_batch = y[i:(i + batch)]
+        temp = np.exp(X_batch @ theta)
+        Z = temp / np.sum(temp, 1, keepdims=True)
+        I_y = np.zeros((batch, theta.shape[1]))
+        I_y[np.arange(batch), y_batch] = 1
+        grad = X_batch.T @ (Z - I_y) / batch
+        theta -= lr * grad
+
     ### END YOUR CODE
 
 
-def nn_epoch(X, y, W1, W2, lr = 0.1, batch=100):
+def nn_epoch(X, y, W1, W2, lr=0.1, batch=100):
     """ Run a single epoch of SGD for a two-layer neural network defined by the
     weights W1 and W2 (with no bias terms):
         logits = ReLU(X * W1) * W2
@@ -130,18 +143,17 @@ def nn_epoch(X, y, W1, W2, lr = 0.1, batch=100):
     ### END YOUR CODE
 
 
-
 ### CODE BELOW IS FOR ILLUSTRATION, YOU DO NOT NEED TO EDIT
 
-def loss_err(h,y):
+def loss_err(h, y):
     """ Helper funciton to compute both loss and error"""
-    return softmax_loss(h,y), np.mean(h.argmax(axis=1) != y)
+    return softmax_loss(h, y), np.mean(h.argmax(axis=1) != y)
 
 
 def train_softmax(X_tr, y_tr, X_te, y_te, epochs=10, lr=0.5, batch=100,
                   cpp=False):
     """ Example function to fully train a softmax regression classifier """
-    theta = np.zeros((X_tr.shape[1], y_tr.max()+1), dtype=np.float32)
+    theta = np.zeros((X_tr.shape[1], y_tr.max() + 1), dtype=np.float32)
     print("| Epoch | Train Loss | Train Err | Test Loss | Test Err |")
     for epoch in range(epochs):
         if not cpp:
@@ -150,11 +162,11 @@ def train_softmax(X_tr, y_tr, X_te, y_te, epochs=10, lr=0.5, batch=100,
             softmax_regression_epoch_cpp(X_tr, y_tr, theta, lr=lr, batch=batch)
         train_loss, train_err = loss_err(X_tr @ theta, y_tr)
         test_loss, test_err = loss_err(X_te @ theta, y_te)
-        print("|  {:>4} |    {:.5f} |   {:.5f} |   {:.5f} |  {:.5f} |"\
+        print("|  {:>4} |    {:.5f} |   {:.5f} |   {:.5f} |  {:.5f} |" \
               .format(epoch, train_loss, train_err, test_loss, test_err))
 
 
-def train_nn(X_tr, y_tr, X_te, y_te, hidden_dim = 500,
+def train_nn(X_tr, y_tr, X_te, y_te, hidden_dim=500,
              epochs=10, lr=0.5, batch=100):
     """ Example function to train two layer neural network """
     n, k = X_tr.shape[1], y_tr.max() + 1
@@ -165,11 +177,10 @@ def train_nn(X_tr, y_tr, X_te, y_te, hidden_dim = 500,
     print("| Epoch | Train Loss | Train Err | Test Loss | Test Err |")
     for epoch in range(epochs):
         nn_epoch(X_tr, y_tr, W1, W2, lr=lr, batch=batch)
-        train_loss, train_err = loss_err(np.maximum(X_tr@W1,0)@W2, y_tr)
-        test_loss, test_err = loss_err(np.maximum(X_te@W1,0)@W2, y_te)
-        print("|  {:>4} |    {:.5f} |   {:.5f} |   {:.5f} |  {:.5f} |"\
+        train_loss, train_err = loss_err(np.maximum(X_tr @ W1, 0) @ W2, y_tr)
+        test_loss, test_err = loss_err(np.maximum(X_te @ W1, 0) @ W2, y_te)
+        print("|  {:>4} |    {:.5f} |   {:.5f} |   {:.5f} |  {:.5f} |" \
               .format(epoch, train_loss, train_err, test_loss, test_err))
-
 
 
 if __name__ == "__main__":
@@ -179,7 +190,7 @@ if __name__ == "__main__":
                              "data/t10k-labels-idx1-ubyte.gz")
 
     print("Training softmax regression")
-    train_softmax(X_tr, y_tr, X_te, y_te, epochs=10, lr = 0.1)
+    train_softmax(X_tr, y_tr, X_te, y_te, epochs=10, lr=0.1)
 
     print("\nTraining two layer neural network w/ 100 hidden units")
-    train_nn(X_tr, y_tr, X_te, y_te, hidden_dim=100, epochs=20, lr = 0.2)
+    train_nn(X_tr, y_tr, X_te, y_te, hidden_dim=100, epochs=20, lr=0.2)
