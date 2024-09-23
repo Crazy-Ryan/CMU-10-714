@@ -139,7 +139,24 @@ def nn_epoch(X, y, W1, W2, lr=0.1, batch=100):
         None
     """
     ### BEGIN YOUR CODE
-    pass
+    for i in range(0, X.shape[0], batch):
+        X_batch = X[i:(i + batch), :]
+        y_batch = y[i:(i + batch)]
+
+        temp1 = X_batch @ W1
+        Z1 = (temp1 > 0) * temp1
+
+        I_y = np.zeros((batch, W2.shape[1]))
+        I_y[np.arange(batch), y_batch] = 1
+        temp2 = np.exp(Z1 @ W2)
+        G2 = temp2 / np.sum(temp2, 1, keepdims=True) - I_y
+
+        G1 = (Z1 > 0) * (G2 @ W2.T)
+
+        gradW1 = X_batch.T @ G1 / batch
+        gradW2 = Z1.T @ G2 / batch
+        W1 -= lr * gradW1
+        W2 -= lr * gradW2
     ### END YOUR CODE
 
 
