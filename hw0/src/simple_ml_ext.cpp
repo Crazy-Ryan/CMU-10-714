@@ -33,7 +33,38 @@ void softmax_regression_epoch_cpp(const float *X, const unsigned char *y,
      */
 
     /// BEGIN YOUR CODE
+    float Z[batch][k];
+    float Z_sum[batch];
+    for (size_t ind = 0; ind < m; ind += batch) {
+        for (size_t batch_ind = 0; batch_ind < batch; batch_ind++ ) {
+            Z_sum[batch_ind] = 0;
+            for (size_t k_ind = 0; k_ind < k; k_ind++) {
+                Z[batch_ind][k_ind] = 0;
+                for (size_t n_ind = 0; n_ind < n; n_ind++ ) {
+                    Z[batch_ind][k_ind] += X[(ind + batch_ind) * n + n_ind] * theta[n_ind * k + k_ind];
+                }
+                Z[batch_ind][k_ind] = exp(Z[batch_ind][k_ind]);
+                Z_sum[batch_ind] += Z[batch_ind][k_ind];
+            }
+        }
 
+        for (size_t batch_ind = 0; batch_ind < batch; batch_ind++ ) {
+            for (size_t k_ind = 0; k_ind < k; k_ind++) {
+                Z[batch_ind][k_ind] /=  Z_sum[batch_ind];
+            }
+            Z[batch_ind][y[ind + batch_ind]] -= 1;
+        }
+
+        for (size_t n_ind = 0; n_ind < n; n_ind++ ) {
+            for (size_t k_ind = 0; k_ind < k; k_ind++) {
+                float sum = 0;
+                for (size_t batch_ind = 0; batch_ind < batch; batch_ind++ ) {
+                    sum += X[(ind + batch_ind) * n + n_ind] * Z[batch_ind][k_ind];
+                }
+                theta[n_ind * k + k_ind] -= lr * sum / batch ;
+            }
+        }
+    }
     /// END YOUR CODE
 }
 
