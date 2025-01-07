@@ -231,12 +231,14 @@ class Summation(TensorOp):
     def gradient(self, out_grad, node):
         ### BEGIN YOUR SOLUTION
         input_shape = node.inputs[0].shape
-        out_shape = list(input_shape)
-        for axe in self.axes:
-            out_shape[axe] = 1
-        out_shape = tuple(out_shape)
-
-        return broadcast_to(reshape(out_grad, out_shape), input_shape)
+        temp = out_grad
+        if self.axes is not None:
+            out_shape = list(input_shape)
+            for axe in self.axes:
+                out_shape[axe] = 1
+            out_shape = tuple(out_shape)
+            temp = reshape(out_grad, out_shape)
+        return broadcast_to(temp, input_shape)
         ### END YOUR SOLUTION
 
 
