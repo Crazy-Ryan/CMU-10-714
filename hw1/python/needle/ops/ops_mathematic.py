@@ -234,7 +234,7 @@ class Summation(TensorOp):
         temp = out_grad
         if self.axes is not None:
             out_shape = list(input_shape)
-            for axe in self.axes:
+            for axe in (self.axes if isinstance(self.axes, tuple) else [self.axes]):
                 out_shape[axe] = 1
             out_shape = tuple(out_shape)
             temp = reshape(out_grad, out_shape)
