@@ -82,8 +82,7 @@ class EWisePow(TensorOp):
         ### BEGIN YOUR SOLUTION
         base = node.inputs[0]
         exponent = node.inputs[1]
-        return (multiply(multiply(exponent, power(base, add_scalar(exponent, -1))), out_grad),
-                multiply(multiply(power(base, exponent), log(base)), out_grad))
+        return exponent * base ** (exponent - 1) * out_grad, base ** exponent* log(base) * out_grad
         ### END YOUR SOLUTION
 
 
@@ -104,7 +103,7 @@ class PowerScalar(TensorOp):
 
     def gradient(self, out_grad, node):
         ### BEGIN YOUR SOLUTION
-        return self.scalar * out_grad * power_scalar(node.inputs[0], self.scalar - 1)
+        return self.scalar * out_grad * node.inputs[0] ** (self.scalar - 1)
         ### END YOUR SOLUTION
 
 
@@ -122,8 +121,8 @@ class EWiseDiv(TensorOp):
 
     def gradient(self, out_grad, node):
         ### BEGIN YOUR SOLUTION
-        return power_scalar(node.inputs[1], -1), mul_scalar(multiply(node.inputs[0], power_scalar(node.inputs[1], -2)),
-                                                            -1)
+        lhs, rhs = node.inputs
+        return out_grad / rhs, -out_grad * lhs / rhs ** 2
         ### END YOUR SOLUTION
 
 
@@ -142,7 +141,7 @@ class DivScalar(TensorOp):
 
     def gradient(self, out_grad, node):
         ### BEGIN YOUR SOLUTION
-        return mul_scalar(out_grad, 1 / self.scalar)
+        return out_grad / self.scalar
         ### END YOUR SOLUTION
 
 
@@ -186,7 +185,7 @@ class Reshape(TensorOp):
 
     def gradient(self, out_grad, node):
         ### BEGIN YOUR SOLUTION
-        return reshape(out_grad, node.inputs[0].shape)
+        return out_grad.reshape(node.inputs[0].shape)
         ### END YOUR SOLUTION
 
 
@@ -205,13 +204,9 @@ class BroadcastTo(TensorOp):
 
     def gradient(self, out_grad, node):
         ### BEGIN YOUR SOLUTION
-        axes = []
         input_shape = node.inputs[0].shape;
-        for ind in range(len(self.shape)):
-            if ind >= len(input_shape) or self.shape[ind] != input_shape[ind]:
-                axes.append(ind)
-
-        return reshape(summation(out_grad, tuple(axes)), input_shape)
+        axes = tuple([ind for ind, dim in enumerate(self.shape) if ind >= len(input_shape) or dim != input_shape[ind]])
+        return out_grad.sum(axes).reshape(input_shape)
         ### END YOUR SOLUTION
 
 
@@ -236,9 +231,8 @@ class Summation(TensorOp):
             out_shape = list(input_shape)
             for axe in (self.axes if isinstance(self.axes, tuple) else [self.axes]):
                 out_shape[axe] = 1
-            out_shape = tuple(out_shape)
-            temp = reshape(out_grad, out_shape)
-        return broadcast_to(temp, input_shape)
+            temp = out_grad.reshape(tuple(out_shape))
+        return temp.broadcast_to(input_shape)
         ### END YOUR SOLUTION
 
 
@@ -254,14 +248,15 @@ class MatMul(TensorOp):
 
     def gradient(self, out_grad, node):
         ### BEGIN YOUR SOLUTION
-        first_grad = matmul(out_grad, transpose(node.inputs[1]))
-        second_grad = matmul(transpose(node.inputs[0]), out_grad)
-        first_grad_len = len(node.inputs[0].shape)
-        second_grad_len = len(node.inputs[1].shape)
+        lhs, rhs = node.inputs
+        first_grad = out_grad.matmul(rhs.transpose())
+        second_grad = lhs.transpose().matmul(out_grad)
+        first_grad_len = len(lhs.shape)
+        second_grad_len = len(rhs.shape)
         if first_grad_len > second_grad_len:
-            second_grad = summation(second_grad, axes=tuple(range(first_grad_len - second_grad_len)))
+            second_grad = second_grad.sum(tuple(range(first_grad_len - second_grad_len)))
         if second_grad_len > first_grad_len:
-            first_grad = summation(first_grad, axes=tuple(range(second_grad_len - first_grad_len)))
+            first_grad = first_grad.sum(tuple(range(second_grad_len - first_grad_len)))
 
         return first_grad, second_grad
 
@@ -280,7 +275,7 @@ class Negate(TensorOp):
 
     def gradient(self, out_grad, node):
         ### BEGIN YOUR SOLUTION
-        return negate(out_grad)
+        return -out_grad
         ### END YOUR SOLUTION
 
 
@@ -296,7 +291,7 @@ class Log(TensorOp):
 
     def gradient(self, out_grad, node):
         ### BEGIN YOUR SOLUTION
-        return divide(out_grad, node.inputs[0])
+        return out_grad / node.inputs[0]
         ### END YOUR SOLUTION
 
 
@@ -312,7 +307,7 @@ class Exp(TensorOp):
 
     def gradient(self, out_grad, node):
         ### BEGIN YOUR SOLUTION
-        return multiply(exp(node.inputs[0]), out_grad)
+        return exp(node.inputs[0]) * out_grad
         ### END YOUR SOLUTION
 
 
@@ -328,7 +323,7 @@ class ReLU(TensorOp):
 
     def gradient(self, out_grad, node):
         ### BEGIN YOUR SOLUTION
-        return multiply(out_grad, Tensor(array_api.greater(node.inputs[0].realize_cached_data(), 0)))
+        return out_grad * Tensor(array_api.greater(node.inputs[0].realize_cached_data(), 0))
         ### END YOUR SOLUTION
 
 
