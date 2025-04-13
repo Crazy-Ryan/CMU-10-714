@@ -122,8 +122,8 @@ class EWiseDiv(TensorOp):
 
     def gradient(self, out_grad, node):
         ### BEGIN YOUR SOLUTION
-        return power_scalar(node.inputs[1], -1), mul_scalar(multiply(node.inputs[0], power_scalar(node.inputs[1], -2)),
-                                                            -1)
+        return (multiply(power_scalar(node.inputs[1], -1), out_grad),
+                multiply(mul_scalar(multiply(node.inputs[0], power_scalar(node.inputs[1], -2)), -1), out_grad))
         ### END YOUR SOLUTION
 
 
