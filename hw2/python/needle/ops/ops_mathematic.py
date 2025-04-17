@@ -204,8 +204,9 @@ class BroadcastTo(TensorOp):
 
     def gradient(self, out_grad, node):
         ### BEGIN YOUR SOLUTION
-        input_shape = node.inputs[0].shape;
-        axes = tuple([ind for ind, dim in enumerate(self.shape) if ind >= len(input_shape) or dim != input_shape[ind]])
+        input_shape = node.inputs[0].shape
+        axes = tuple([len(self.shape) - ind - 1 for ind, dim in enumerate(reversed(self.shape)) if
+                      len(input_shape) - ind - 1 < 0 or dim != input_shape[-ind - 1]])
         return out_grad.sum(axes).reshape(input_shape)
         ### END YOUR SOLUTION
 
