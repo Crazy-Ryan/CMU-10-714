@@ -162,6 +162,9 @@ class BatchNorm1d(Module):
     def forward(self, x: Tensor) -> Tensor:
         ### BEGIN YOUR SOLUTION
         # raise NotImplementedError()
+        if not self.training:
+            return self.weight.broadcast_to(x.shape) * (x - self.running_mean.broadcast_to(x.shape)) / (
+                        (self.running_var + self.eps) ** 0.5).broadcast_to(x.shape) + self.bias.broadcast_to(x.shape)
         e_x = x.sum(axes = (0,)) / x.shape[0]
         diff = x - e_x.broadcast_to(x.shape)
         var = (diff**2).sum(axes = (0,)) / x.shape[0]
