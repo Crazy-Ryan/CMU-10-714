@@ -64,7 +64,7 @@ class DataLoader:
         self.batch_ind = 0
         if self.shuffle:
             arr = np.arange(len(self.dataset))
-            np.random.default_rng().shuffle(arr)
+            np.random.shuffle(arr)
             self.ordering = np.array_split(arr,
                                            range(self.batch_size, len(self.dataset), self.batch_size))
 
@@ -78,6 +78,6 @@ class DataLoader:
             raise StopIteration
         res = [self.dataset[ind] for ind in self.ordering[self.batch_ind]]
         self.batch_ind += 1
-        return Tensor([x for x, _ in res]), Tensor([y for _, y in res])
+        return [Tensor([x[ind] for x in res]) for ind in range(len(res[0]))]
         ### END YOUR SOLUTION
 
