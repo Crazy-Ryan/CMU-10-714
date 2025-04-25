@@ -66,9 +66,10 @@ class Adam(Optimizer):
         # raise NotImplementedError()
         self.t += 1
         for ind, param in enumerate(self.params):
-            self.m[ind] = (self.beta1 * (self.m.get(ind) or 0) + (1 - self.beta1) * param.grad).data
-            self.v[ind] = (self.beta2 * (self.v.get(ind) or 0) + (1 - self.beta2) * param.grad ** 2).data
+            grad =  param.grad.data + self.weight_decay * param.data
+            self.m[ind] = (self.beta1 * (self.m.get(ind) or 0) + (1 - self.beta1) * grad.data).data
+            self.v[ind] = (self.beta2 * (self.v.get(ind) or 0) + (1 - self.beta2) * grad.data ** 2).data
             new_m = self.m[ind] / (1 - self.beta1 ** self.t)
             new_v = self.v[ind] / (1 - self.beta2 ** self.t)
-            param.data = ndl.Tensor(param.data - self.lr * new_m / (new_v ** 0.5 + self.eps), dtype=param.dtype)
+            param.data = ndl.Tensor(param.data - self.lr * new_m.data / (new_v.data ** 0.5 + self.eps), dtype=param.dtype)
         ### END YOUR SOLUTION
