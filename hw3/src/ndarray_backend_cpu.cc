@@ -62,7 +62,26 @@ void Compact(const AlignedArray& a, AlignedArray* out, std::vector<int32_t> shap
    *  function will implement here, so we won't repeat this note.)
    */
   /// BEGIN SOLUTION
-  assert(false && "Not Implemented");
+//  assert(false && "Not Implemented");
+    std::vector<size_t> indexes(shape.size());
+    size_t incrementing_index;
+    size_t out_counter = 0;
+    while(indexes[0] != shape[0]) {
+        size_t a_pos = offset;
+        for (size_t ind = 0; ind < indexes.size(); ind++) {
+            a_pos += indexes[ind] * strides[ind];
+        }
+        out->ptr[out_counter++] = a.ptr[a_pos];
+
+        incrementing_index = shape.size() - 1;
+        while (incrementing_index != 0 && indexes[incrementing_index] == shape[incrementing_index] - 1) {
+            incrementing_index--;
+        }
+        for (size_t ind = incrementing_index + 1; ind < indexes.size(); ind++) {
+            indexes[ind] = 0;
+        }
+        indexes[incrementing_index]++;
+    }
   /// END SOLUTION
 }
 
@@ -79,7 +98,26 @@ void EwiseSetitem(const AlignedArray& a, AlignedArray* out, std::vector<int32_t>
    *   offset: offset of the *out* array (not a, which has zero offset, being compact)
    */
   /// BEGIN SOLUTION
-  assert(false && "Not Implemented");
+//  assert(false && "Not Implemented");
+    std::vector<size_t> indexes(shape.size());
+    size_t incrementing_index;
+    size_t a_counter = 0;
+    while(indexes[0] != shape[0]) {
+        size_t out_pos = offset;
+        for (size_t ind = 0; ind < indexes.size(); ind++) {
+            out_pos += indexes[ind] * strides[ind];
+        }
+        out->ptr[out_pos] = a.ptr[a_counter++];
+
+        incrementing_index = shape.size() - 1;
+        while (incrementing_index != 0 && indexes[incrementing_index] == shape[incrementing_index] - 1) {
+            incrementing_index--;
+        }
+        for (size_t ind = incrementing_index + 1; ind < indexes.size(); ind++) {
+            indexes[ind] = 0;
+        }
+        indexes[incrementing_index]++;
+    }
   /// END SOLUTION
 }
 
@@ -100,7 +138,25 @@ void ScalarSetitem(const size_t size, scalar_t val, AlignedArray* out, std::vect
    */
 
   /// BEGIN SOLUTION
-  assert(false && "Not Implemented");
+//  assert(false && "Not Implemented");
+    std::vector<size_t> indexes(shape.size());
+    size_t incrementing_index;
+    while(indexes[0] != shape[0]) {
+        size_t out_pos = offset;
+        for (size_t ind = 0; ind < indexes.size(); ind++) {
+            out_pos += indexes[ind] * strides[ind];
+        }
+        out->ptr[out_pos] = val;
+
+        incrementing_index = shape.size() - 1;
+        while (incrementing_index != 0 && indexes[incrementing_index] == shape[incrementing_index] - 1) {
+            incrementing_index--;
+        }
+        for (size_t ind = incrementing_index + 1; ind < indexes.size(); ind++) {
+            indexes[ind] = 0;
+        }
+        indexes[incrementing_index]++;
+    }
   /// END SOLUTION
 }
 
