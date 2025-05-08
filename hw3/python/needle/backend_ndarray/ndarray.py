@@ -374,9 +374,10 @@ class NDArray:
 
         ### BEGIN YOUR SOLUTION
         # raise NotImplementedError()
-        new_shape = tuple(idx.stop - idx.start for idx in idxs)
+        new_shape = tuple((idx.stop - idx.start - 1)  // idx.step + 1 for idx in idxs)
         offset = reduce(operator.add, [self.strides[i] * idx.start for i, idx in enumerate(idxs)])
-        return NDArray.make(new_shape, self.strides, self.device, self._handle,offset)
+        strides = tuple(self.strides[i] * idx.step for i, idx in enumerate(idxs))
+        return NDArray.make(new_shape, strides, self.device, self._handle,offset)
         ### END YOUR SOLUTION
 
     def __setitem__(self, idxs, other):
