@@ -32,6 +32,24 @@ struct AlignedArray {
   size_t size;
 };
 
+void EwiseOp(const AlignedArray& a, const AlignedArray& b, AlignedArray* out, scalar_t (*func)(scalar_t, scalar_t)) {
+  for (size_t i = 0; i < a.size; i++) {
+    out->ptr[i] = func(a.ptr[i], b.ptr[i]);
+  }
+}
+
+void EwiseOp(const AlignedArray& a, AlignedArray* out, scalar_t (*func)(scalar_t)) {
+  for (size_t i = 0; i < a.size; i++) {
+    out->ptr[i] = func(a.ptr[i]);
+  }
+}
+
+
+void ScalarOp(const AlignedArray& a, scalar_t val, AlignedArray* out, scalar_t (*func)(scalar_t, scalar_t)) {
+  for (size_t i = 0; i < a.size; i++) {
+    out->ptr[i] = func(a.ptr[i], val);
+  }
+}
 
 
 void Fill(AlignedArray* out, scalar_t val) {
@@ -199,6 +217,44 @@ void ScalarAdd(const AlignedArray& a, scalar_t val, AlignedArray* out) {
  * signatures above.
  */
 
+auto mul = [](scalar_t item_1, scalar_t item_2){return item_1 * item_2;};
+auto div = [](scalar_t item_1, scalar_t item_2){return item_1 / item_2;};
+auto power = [](scalar_t item_1, scalar_t item_2){return std::pow(item_1, item_2);};
+auto max = [](scalar_t item_1, scalar_t item_2){return item_1 > item_2 ? item_1: item_2;};
+auto eq = [](scalar_t item_1, scalar_t item_2){return static_cast<scalar_t>(item_1 == item_2);};
+auto ge = [](scalar_t item_1, scalar_t item_2){return static_cast<scalar_t>(item_1 >= item_2);};
+auto log = [](scalar_t item){return std::log(item);};
+auto exp = [](scalar_t item){return std::exp(item);};
+auto tanh = [](scalar_t item){return std::tanh(item);};
+
+void EwiseMul(const AlignedArray& a, const AlignedArray& b, AlignedArray* out) { EwiseOp(a, b, out, mul); }
+
+void ScalarMul(const AlignedArray& a, scalar_t val, AlignedArray* out) { ScalarOp(a, val, out, mul); }
+
+void EwiseDiv(const AlignedArray& a, const AlignedArray& b, AlignedArray* out) { EwiseOp(a, b, out, div); }
+
+void ScalarDiv(const AlignedArray& a, scalar_t val, AlignedArray* out) { ScalarOp(a, val, out, div); }
+
+void ScalarPower(const AlignedArray& a, scalar_t val, AlignedArray* out) { ScalarOp(a, val, out, power); }
+
+void EwiseMaximum(const AlignedArray& a, const AlignedArray& b, AlignedArray* out) { EwiseOp(a, b, out, max); }
+
+void ScalarMaximum(const AlignedArray& a, scalar_t val, AlignedArray* out) { ScalarOp(a, val, out, max); }
+
+void EwiseEq(const AlignedArray& a, const AlignedArray& b, AlignedArray* out) { EwiseOp(a, b, out, eq); }
+
+void ScalarEq(const AlignedArray& a, scalar_t val, AlignedArray* out) { ScalarOp(a, val, out, eq); }
+
+void EwiseGe(const AlignedArray& a, const AlignedArray& b, AlignedArray* out) { EwiseOp(a, b, out, ge); }
+
+void ScalarGe(const AlignedArray& a, scalar_t val, AlignedArray* out) { ScalarOp(a, val, out, ge); }
+
+void EwiseLog(const AlignedArray& a, AlignedArray* out) { EwiseOp(a, out, log); }
+
+void EwiseExp(const AlignedArray& a, AlignedArray* out) { EwiseOp(a, out, exp); }
+
+void EwiseTanh(const AlignedArray& a, AlignedArray* out) { EwiseOp(a, out, tanh); }
+
 
 void Matmul(const AlignedArray& a, const AlignedArray& b, AlignedArray* out, uint32_t m, uint32_t n,
             uint32_t p) {
@@ -344,22 +400,22 @@ PYBIND11_MODULE(ndarray_backend_cpu, m) {
   m.def("ewise_add", EwiseAdd);
   m.def("scalar_add", ScalarAdd);
 
-  // m.def("ewise_mul", EwiseMul);
-  // m.def("scalar_mul", ScalarMul);
-  // m.def("ewise_div", EwiseDiv);
-  // m.def("scalar_div", ScalarDiv);
-  // m.def("scalar_power", ScalarPower);
+   m.def("ewise_mul", EwiseMul);
+   m.def("scalar_mul", ScalarMul);
+   m.def("ewise_div", EwiseDiv);
+   m.def("scalar_div", ScalarDiv);
+   m.def("scalar_power", ScalarPower);
 
-  // m.def("ewise_maximum", EwiseMaximum);
-  // m.def("scalar_maximum", ScalarMaximum);
-  // m.def("ewise_eq", EwiseEq);
-  // m.def("scalar_eq", ScalarEq);
-  // m.def("ewise_ge", EwiseGe);
-  // m.def("scalar_ge", ScalarGe);
+   m.def("ewise_maximum", EwiseMaximum);
+   m.def("scalar_maximum", ScalarMaximum);
+   m.def("ewise_eq", EwiseEq);
+   m.def("scalar_eq", ScalarEq);
+   m.def("ewise_ge", EwiseGe);
+   m.def("scalar_ge", ScalarGe);
 
-  // m.def("ewise_log", EwiseLog);
-  // m.def("ewise_exp", EwiseExp);
-  // m.def("ewise_tanh", EwiseTanh);
+   m.def("ewise_log", EwiseLog);
+   m.def("ewise_exp", EwiseExp);
+   m.def("ewise_tanh", EwiseTanh);
 
   // m.def("matmul", Matmul);
   // m.def("matmul_tiled", MatmulTiled);
