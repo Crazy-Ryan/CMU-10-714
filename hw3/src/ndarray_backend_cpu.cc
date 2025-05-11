@@ -272,7 +272,15 @@ void Matmul(const AlignedArray& a, const AlignedArray& b, AlignedArray* out, uin
    */
 
   /// BEGIN SOLUTION
-  assert(false && "Not Implemented");
+//  assert(false && "Not Implemented");
+    for (size_t i = 0; i < m; i++) {
+        for (size_t k = 0; k < p; k++) {
+            out->ptr[i*p+k] = 0;
+            for (size_t j = 0; j < n; j++) {
+                out->ptr[i*p+k] += a.ptr[i*n+j] * b.ptr[j*p+k];
+            }
+        }
+    }
   /// END SOLUTION
 }
 
@@ -302,7 +310,14 @@ inline void AlignedDot(const float* __restrict__ a,
   out = (float*)__builtin_assume_aligned(out, TILE * ELEM_SIZE);
 
   /// BEGIN SOLUTION
-  assert(false && "Not Implemented");
+//  assert(false && "Not Implemented");
+    for (size_t i = 0; i < TILE; i++) {
+        for (size_t k = 0; k < TILE; k++) {
+            for (size_t j = 0; j < TILE; j++) {
+                out[i*TILE+k] += a[i*TILE+j] * b[j*TILE+k];
+            }
+        }
+    }
   /// END SOLUTION
 }
 
@@ -328,7 +343,20 @@ void MatmulTiled(const AlignedArray& a, const AlignedArray& b, AlignedArray* out
    *
    */
   /// BEGIN SOLUTION
-  assert(false && "Not Implemented");
+//  assert(false && "Not Implemented");
+    for (size_t i = 0; i < m/TILE; i++) {
+        for (size_t k = 0; k < p/TILE; k++) {
+            for (size_t row = 0; row < TILE; row++) {
+                for (size_t col = 0; col < TILE; col++) {
+                    out->ptr[i*p*TILE + k*TILE*TILE + row*TILE + col] = 0;
+                }
+            }
+
+            for (size_t j = 0; j < n/TILE; j++) {
+                AlignedDot(a.ptr + i*n*TILE + j*TILE*TILE, b.ptr + j*p*TILE + k*TILE*TILE, out->ptr + i*p*TILE + k*TILE*TILE);
+            }
+        }
+    }
   /// END SOLUTION
 }
 
@@ -437,8 +465,8 @@ PYBIND11_MODULE(ndarray_backend_cpu, m) {
    m.def("ewise_exp", EwiseExp);
    m.def("ewise_tanh", EwiseTanh);
 
-  // m.def("matmul", Matmul);
-  // m.def("matmul_tiled", MatmulTiled);
+   m.def("matmul", Matmul);
+   m.def("matmul_tiled", MatmulTiled);
 
    m.def("reduce_max", ReduceMax);
    m.def("reduce_sum", ReduceSum);
