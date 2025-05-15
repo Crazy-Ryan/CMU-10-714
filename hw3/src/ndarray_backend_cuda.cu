@@ -250,6 +250,169 @@ void ScalarAdd(const CudaArray& a, scalar_t val, CudaArray* out) {
   ScalarAddKernel<<<dim.grid, dim.block>>>(a.ptr, val, out->ptr, out->size);
 }
 
+// __device__ auto mul = [](scalar_t item_1, scalar_t item_2){return item_1 * item_2;};
+typedef scalar_t (*binary_op)(scalar_t item_1, scalar_t item_2);
+
+typedef scalar_t (*unary_op)(scalar_t item);
+
+__device__ scalar_t mul(scalar_t item_1, scalar_t item_2) { return item_1 * item_2;}
+__device__ binary_op mul_func_ptr = mul;
+
+__device__ scalar_t div(scalar_t item_1, scalar_t item_2) { return item_1 / item_2;}
+__device__ binary_op div_func_ptr = div;
+
+__device__ scalar_t pow(scalar_t item_1, scalar_t item_2) { return std::pow(item_1, item_2);}
+__device__ binary_op pow_func_ptr = pow;
+
+__device__ scalar_t max(scalar_t item_1, scalar_t item_2) { return item_1 > item_2 ? item_1 : item_2;}
+__device__ binary_op max_func_ptr = max;
+
+__device__ scalar_t eq(scalar_t item_1, scalar_t item_2) { return item_1 == item_2;}
+__device__ binary_op eq_func_ptr = eq;
+
+__device__ scalar_t ge(scalar_t item_1, scalar_t item_2) { return item_1 >= item_2;}
+__device__ binary_op ge_func_ptr = ge;
+
+__device__ scalar_t log(scalar_t item) { return std::log(item);}
+__device__ unary_op log_func_ptr = log;
+
+__device__ scalar_t exp(scalar_t item) { return std::exp(item);}
+__device__ unary_op exp_func_ptr = exp;
+
+__device__ scalar_t tanh(scalar_t item) { return std::tanh(item);}
+__device__ unary_op tanh_func_ptr = tanh;
+
+__global__ void EwiseOpKernel(const scalar_t* a, const scalar_t* b, scalar_t* out, size_t size, binary_op func) {
+  // Calculate the global index of the thread.
+  size_t gid = blockIdx.x * blockDim.x + threadIdx.x;
+  if (gid < size) out[gid] = func(a[gid], b[gid]);
+}
+
+
+__global__ void EwiseOpKernel(const scalar_t* a, scalar_t* out, size_t size, unary_op func) {
+  // Calculate the global index of the thread.
+  size_t gid = blockIdx.x * blockDim.x + threadIdx.x;
+  if (gid < size) out[gid] = func(a[gid]);
+}
+
+
+__global__ void ScalarOpKernel(const scalar_t* a, scalar_t val, scalar_t* out, size_t size, binary_op func) {
+  // Calculate the global index of the thread.
+  size_t gid = blockIdx.x * blockDim.x + threadIdx.x;
+  if (gid < size) out[gid] = func(a[gid], val);
+}
+
+void EwiseMul(const CudaArray& a, const CudaArray& b, CudaArray* out) {
+  CudaDims dim = CudaOneDim(out->size);
+  binary_op host_function_ptr;
+  cudaMemcpyFromSymbol(&host_function_ptr, mul_func_ptr, sizeof(binary_op));
+  EwiseOpKernel<<<dim.grid, dim.block>>>(a.ptr, b.ptr, out->ptr, out->size, host_function_ptr);
+}
+
+
+void ScalarMul(const CudaArray& a, scalar_t val, CudaArray* out) {
+  CudaDims dim = CudaOneDim(out->size);
+  binary_op host_function_ptr;
+  cudaMemcpyFromSymbol(&host_function_ptr, mul_func_ptr, sizeof(binary_op));
+  ScalarOpKernel<<<dim.grid, dim.block>>>(a.ptr, val, out->ptr, out->size, host_function_ptr);
+}
+
+void EwiseDiv(const CudaArray& a, const CudaArray& b, CudaArray* out) {
+  CudaDims dim = CudaOneDim(out->size);
+  binary_op host_function_ptr;
+  cudaMemcpyFromSymbol(&host_function_ptr, div_func_ptr, sizeof(binary_op));
+  EwiseOpKernel<<<dim.grid, dim.block>>>(a.ptr, b.ptr, out->ptr, out->size, host_function_ptr);
+}
+
+
+void ScalarDiv(const CudaArray& a, scalar_t val, CudaArray* out) {
+  CudaDims dim = CudaOneDim(out->size);
+  binary_op host_function_ptr;
+  cudaMemcpyFromSymbol(&host_function_ptr, div_func_ptr, sizeof(binary_op));
+  ScalarOpKernel<<<dim.grid, dim.block>>>(a.ptr, val, out->ptr, out->size, host_function_ptr);
+}
+
+
+void ScalarPower(const CudaArray& a, scalar_t val, CudaArray* out) {
+  CudaDims dim = CudaOneDim(out->size);
+  binary_op host_function_ptr;
+  cudaMemcpyFromSymbol(&host_function_ptr, pow_func_ptr, sizeof(binary_op));
+  ScalarOpKernel<<<dim.grid, dim.block>>>(a.ptr, val, out->ptr, out->size, host_function_ptr);
+}
+
+
+void EwiseMaximum(const CudaArray& a, const CudaArray& b, CudaArray* out) {
+  CudaDims dim = CudaOneDim(out->size);
+  binary_op host_function_ptr;
+  cudaMemcpyFromSymbol(&host_function_ptr, max_func_ptr, sizeof(binary_op));
+  EwiseOpKernel<<<dim.grid, dim.block>>>(a.ptr, b.ptr, out->ptr, out->size, host_function_ptr);
+}
+
+
+void ScalarMaximum(const CudaArray& a, scalar_t val, CudaArray* out) {
+  CudaDims dim = CudaOneDim(out->size);
+  binary_op host_function_ptr;
+  cudaMemcpyFromSymbol(&host_function_ptr, max_func_ptr, sizeof(binary_op));
+  ScalarOpKernel<<<dim.grid, dim.block>>>(a.ptr, val, out->ptr, out->size, host_function_ptr);
+}
+
+void EwiseEq(const CudaArray& a, const CudaArray& b, CudaArray* out) {
+  CudaDims dim = CudaOneDim(out->size);
+  binary_op host_function_ptr;
+  cudaMemcpyFromSymbol(&host_function_ptr, eq_func_ptr, sizeof(binary_op));
+  EwiseOpKernel<<<dim.grid, dim.block>>>(a.ptr, b.ptr, out->ptr, out->size, host_function_ptr);
+}
+
+
+void ScalarEq(const CudaArray& a, scalar_t val, CudaArray* out) {
+  CudaDims dim = CudaOneDim(out->size);
+  binary_op host_function_ptr;
+  cudaMemcpyFromSymbol(&host_function_ptr, eq_func_ptr, sizeof(binary_op));
+  ScalarOpKernel<<<dim.grid, dim.block>>>(a.ptr, val, out->ptr, out->size, host_function_ptr);
+}
+
+
+void EwiseGe(const CudaArray& a, const CudaArray& b, CudaArray* out) {
+  CudaDims dim = CudaOneDim(out->size);
+  binary_op host_function_ptr;
+  cudaMemcpyFromSymbol(&host_function_ptr, ge_func_ptr, sizeof(binary_op));
+  EwiseOpKernel<<<dim.grid, dim.block>>>(a.ptr, b.ptr, out->ptr, out->size, host_function_ptr);
+}
+
+
+void ScalarGe(const CudaArray& a, scalar_t val, CudaArray* out) {
+  CudaDims dim = CudaOneDim(out->size);
+  binary_op host_function_ptr;
+  cudaMemcpyFromSymbol(&host_function_ptr, ge_func_ptr, sizeof(binary_op));
+  ScalarOpKernel<<<dim.grid, dim.block>>>(a.ptr, val, out->ptr, out->size, host_function_ptr);
+}
+
+
+void EwiseLog(const CudaArray& a, CudaArray* out) {
+  CudaDims dim = CudaOneDim(out->size);
+  unary_op host_function_ptr;
+  cudaMemcpyFromSymbol(&host_function_ptr, log_func_ptr, sizeof(unary_op));
+  EwiseOpKernel<<<dim.grid, dim.block>>>(a.ptr, out->ptr, out->size, host_function_ptr);
+}
+
+
+void EwiseExp(const CudaArray& a, CudaArray* out) {
+  CudaDims dim = CudaOneDim(out->size);
+  unary_op host_function_ptr;
+  cudaMemcpyFromSymbol(&host_function_ptr, exp_func_ptr, sizeof(unary_op));
+  EwiseOpKernel<<<dim.grid, dim.block>>>(a.ptr, out->ptr, out->size, host_function_ptr);
+}
+
+
+void EwiseTanh(const CudaArray& a, CudaArray* out) {
+  CudaDims dim = CudaOneDim(out->size);
+  unary_op host_function_ptr;
+  cudaMemcpyFromSymbol(&host_function_ptr, tanh_func_ptr, sizeof(unary_op));
+  EwiseOpKernel<<<dim.grid, dim.block>>>(a.ptr, out->ptr, out->size, host_function_ptr);
+}
+
+
+
 /**
  * In the code the follows, use the above template to create analogous elementise
  * and and scalar operators for the following functions.  See the numpy backend for
@@ -390,22 +553,22 @@ PYBIND11_MODULE(ndarray_backend_cuda, m) {
   m.def("ewise_add", EwiseAdd);
   m.def("scalar_add", ScalarAdd);
 
-  // m.def("ewise_mul", EwiseMul);
-  // m.def("scalar_mul", ScalarMul);
-  // m.def("ewise_div", EwiseDiv);
-  // m.def("scalar_div", ScalarDiv);
-  // m.def("scalar_power", ScalarPower);
+  m.def("ewise_mul", EwiseMul);
+  m.def("scalar_mul", ScalarMul);
+  m.def("ewise_div", EwiseDiv);
+  m.def("scalar_div", ScalarDiv);
+  m.def("scalar_power", ScalarPower);
 
-  // m.def("ewise_maximum", EwiseMaximum);
-  // m.def("scalar_maximum", ScalarMaximum);
-  // m.def("ewise_eq", EwiseEq);
-  // m.def("scalar_eq", ScalarEq);
-  // m.def("ewise_ge", EwiseGe);
-  // m.def("scalar_ge", ScalarGe);
+  m.def("ewise_maximum", EwiseMaximum);
+  m.def("scalar_maximum", ScalarMaximum);
+  m.def("ewise_eq", EwiseEq);
+  m.def("scalar_eq", ScalarEq);
+  m.def("ewise_ge", EwiseGe);
+  m.def("scalar_ge", ScalarGe);
 
-  // m.def("ewise_log", EwiseLog);
-  // m.def("ewise_exp", EwiseExp);
-  // m.def("ewise_tanh", EwiseTanh);
+  m.def("ewise_log", EwiseLog);
+  m.def("ewise_exp", EwiseExp);
+  m.def("ewise_tanh", EwiseTanh);
 
   // m.def("matmul", Matmul);
 
