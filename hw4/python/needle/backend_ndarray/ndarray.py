@@ -247,7 +247,8 @@ class NDArray:
         """
 
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        # raise NotImplementedError()
+        return NDArray.make(new_shape, None, self.device, self._handle, 0)
         ### END YOUR SOLUTION
 
     def permute(self, new_axes):
@@ -272,7 +273,11 @@ class NDArray:
         """
 
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        # raise NotImplementedError()
+        new_shape = tuple([self.shape[axis] for axis in new_axes])
+        new_stride = tuple([self.strides[axis] for axis in new_axes])
+
+        return NDArray.make(new_shape, new_stride, self.device, self._handle, 0)
         ### END YOUR SOLUTION
 
     def broadcast_to(self, new_shape):
@@ -296,7 +301,12 @@ class NDArray:
         """
 
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        # raise NotImplementedError()
+        new_stride = tuple([(0 if dim == 1 else self.strides[i]) for i, dim in enumerate(self.shape)])
+        for i in range(len(self.shape)):
+            assert self.shape[i] in(1, new_shape[i])
+        return NDArray.make(new_shape, new_stride, self.device, self._handle, 0)
+
         ### END YOUR SOLUTION
 
     ### Get and set elements
@@ -363,7 +373,11 @@ class NDArray:
         assert len(idxs) == self.ndim, "Need indexes equal to number of dimensions"
 
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        # raise NotImplementedError()
+        new_shape = tuple((idx.stop - idx.start - 1)  // idx.step + 1 for idx in idxs)
+        offset = reduce(operator.add, [self.strides[i] * idx.start for i, idx in enumerate(idxs)])
+        strides = tuple(self.strides[i] * idx.step for i, idx in enumerate(idxs))
+        return NDArray.make(new_shape, strides, self.device, self._handle,offset)
         ### END YOUR SOLUTION
 
     def __setitem__(self, idxs, other):
