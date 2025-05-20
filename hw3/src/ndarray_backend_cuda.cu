@@ -251,7 +251,6 @@ void ScalarAdd(const CudaArray& a, scalar_t val, CudaArray* out) {
   ScalarAddKernel<<<dim.grid, dim.block>>>(a.ptr, val, out->ptr, out->size);
 }
 
-// __device__ auto mul = [](scalar_t item_1, scalar_t item_2){return item_1 * item_2;};
 typedef scalar_t (*binary_op)(scalar_t item_1, scalar_t item_2);
 
 typedef scalar_t (*unary_op)(scalar_t item);
