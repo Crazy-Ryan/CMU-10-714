@@ -100,6 +100,7 @@ __global__ void CompactKernel(const scalar_t* a, scalar_t* out, size_t size, Cud
 
   /// BEGIN SOLUTION
 //   assert(false && "Not Implemented");
+  if (gid >= size) return;
   size_t temp = gid;
   size_t a_pos = offset;
   for(size_t ind = shape.size; ind > 0; ind--) {
@@ -137,6 +138,7 @@ void Compact(const CudaArray& a, CudaArray* out, std::vector<int32_t> shape,
 __global__ void EwiseSetitemKernel(const scalar_t* a, scalar_t* out, size_t size, CudaVec shape,
                               CudaVec strides, size_t offset) {
   size_t gid = blockIdx.x * blockDim.x + threadIdx.x;
+  if (gid >= size) return;
   size_t temp = gid;
   size_t out_pos = offset;
   for(size_t ind = shape.size; ind > 0; ind--) {
@@ -163,15 +165,16 @@ void EwiseSetitem(const CudaArray& a, CudaArray* out, std::vector<int32_t> shape
    */
   /// BEGIN SOLUTION
 //   assert(false && "Not Implemented");
-  CudaDims dim = CudaOneDim(out->size);
-  EwiseSetitemKernel<<<dim.grid, dim.block>>>(a.ptr, out->ptr, out->size, VecToCuda(shape),
+  CudaDims dim = CudaOneDim(a.size);
+  EwiseSetitemKernel<<<dim.grid, dim.block>>>(a.ptr, out->ptr, a.size, VecToCuda(shape),
                                          VecToCuda(strides), offset);
   /// END SOLUTION
 }
 
 
-__global__ void ScalarSetitemKernel(scalar_t* out, scalar_t val, CudaVec shape, CudaVec strides, size_t offset) {
+__global__ void ScalarSetitemKernel(scalar_t* out, scalar_t val, size_t size, CudaVec shape, CudaVec strides, size_t offset) {
   size_t gid = blockIdx.x * blockDim.x + threadIdx.x;
+  if (gid >= size) return;
   size_t temp = gid;
   size_t out_pos = offset;
   for(size_t ind = shape.size; ind > 0; ind--) {
@@ -200,8 +203,8 @@ void ScalarSetitem(size_t size, scalar_t val, CudaArray* out, std::vector<int32_
    */
   /// BEGIN SOLUTION
 //   assert(false && "Not Implemented");
-  CudaDims dim = CudaOneDim(out->size);
-  ScalarSetitemKernel<<<dim.grid, dim.block>>>(out->ptr, val, VecToCuda(shape), VecToCuda(strides), offset);
+  CudaDims dim = CudaOneDim(size);
+  ScalarSetitemKernel<<<dim.grid, dim.block>>>(out->ptr, val, size, VecToCuda(shape), VecToCuda(strides), offset);
   /// END SOLUTION
 }
 
@@ -554,9 +557,11 @@ __global__ void ReduceSumKernel(const scalar_t* a, scalar_t* out, size_t out_siz
   // Calculate the global index of the thread.
   size_t gid = blockIdx.x * blockDim.x + threadIdx.x;
   if (gid >= out_size) return;
+  scalar_t sum = 0;
   for (size_t ind = 0; ind < reduce_size; ind++) {
-    out[gid] += a[gid*reduce_size+ind];
+    sum += a[gid*reduce_size+ind];
   }
+  out[gid] = sum;
 }
 
 void ReduceSum(const CudaArray& a, CudaArray* out, size_t reduce_size) {
