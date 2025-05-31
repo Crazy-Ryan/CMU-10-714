@@ -11,14 +11,38 @@ class ResNet9(ndl.nn.Module):
     def __init__(self, device=None, dtype="float32"):
         super().__init__()
         ### BEGIN YOUR SOLUTION ###
-        raise NotImplementedError() ###
+        # raise NotImplementedError() ###
+        self.device = device
+        self.conv_bn1 = ConvBN(3,16,7,4, device = device)
+        self.conv_bn2 = ConvBN(16,32,3,2, device = device)
+        self.conv_bn3 = ConvBN(32,32,3,1, device = device)
+        self.conv_bn4 = ConvBN(32,32,3,1, device = device)
+        self.conv_bn5 = ConvBN(32,64,3,2, device = device)
+        self.conv_bn6 = ConvBN(64,128,3,2, device = device)
+        self.conv_bn7 = ConvBN(128,128,3,1, device = device)
+        self.conv_bn8 = ConvBN(128,128,3,1, device = device)
+        self.flatten = nn.Flatten()
+        self.linear1 = nn.Linear(128,128, device = device)
+        self.relu = nn.ReLU()
+        self.linear2 = nn.Linear(128,10, device = device)
         ### END YOUR SOLUTION
 
     def forward(self, x):
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        # raise NotImplementedError()
+        conv2 = self.conv_bn2(self.conv_bn1(ndl.Tensor(x, device=self.device)))
+        conv4 = self.conv_bn4(self.conv_bn3(conv2)) + conv2
+        conv6 = self.conv_bn6(self.conv_bn5(conv4))
+        conv8 = self.conv_bn8(self.conv_bn7(conv6)) + conv6
+        return self.linear2(self.relu(self.linear1(self.flatten(conv8))))
         ### END YOUR SOLUTION
 
+def ConvBN(a, b, k, s, device):
+    return nn.Sequential(
+        nn.Conv(a, b, k, s, device=device),
+        nn.BatchNorm2d(b, device=device),
+        nn.ReLU()
+    )
 
 class LanguageModel(nn.Module):
     def __init__(self, embedding_size, output_size, hidden_size, num_layers=1,

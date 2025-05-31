@@ -110,7 +110,26 @@ def epoch_general_cifar10(dataloader, model, loss_fn=nn.SoftmaxLoss(), opt=None)
     """
     np.random.seed(4)
     ### BEGIN YOUR SOLUTION
-    raise NotImplementedError()
+    # raise NotImplementedError()
+    model.train() if opt else model.eval()
+
+    sum_loss = 0
+    all_count = 0
+    batch_count = 0
+    error_count = 0
+    for batch in dataloader:
+        batch_x, batch_y = batch
+        y_predict = model(ndl.Tensor(batch_x, device = model.device))
+        all_count += batch_x.shape[0]
+        error_count += (y_predict.numpy().argmax(axis=1) != batch_y.numpy()).sum()
+        loss = loss_fn(y_predict, batch_y)
+        sum_loss += loss.numpy()
+        batch_count += 1
+        if opt:
+            loss.backward()
+            opt.step()
+    return all_count - error_count / all_count, sum_loss / batch_count
+
     ### END YOUR SOLUTION
 
 
@@ -134,7 +153,12 @@ def train_cifar10(model, dataloader, n_epochs=1, optimizer=ndl.optim.Adam,
     """
     np.random.seed(4)
     ### BEGIN YOUR SOLUTION
-    raise NotImplementedError()
+    # raise NotImplementedError()
+    loss_fn_instance = loss_fn()
+    opt = optimizer(model.parameters())
+    for _ in range(n_epochs):
+        avg_acc, avg_loss = epoch_general_cifar10(dataloader, model, loss_fn=loss_fn_instance, opt=opt)
+    return avg_acc, avg_loss
     ### END YOUR SOLUTION
 
 
@@ -153,7 +177,8 @@ def evaluate_cifar10(model, dataloader, loss_fn=nn.SoftmaxLoss):
     """
     np.random.seed(4)
     ### BEGIN YOUR SOLUTION
-    raise NotImplementedError()
+    # raise NotImplementedError()
+    return epoch_general_cifar10(dataloader, model, loss_fn=loss_fn())
     ### END YOUR SOLUTION
 
 

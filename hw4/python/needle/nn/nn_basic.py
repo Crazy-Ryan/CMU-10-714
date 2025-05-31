@@ -141,7 +141,7 @@ class SoftmaxLoss(Module):
     def forward(self, logits: Tensor, y: Tensor):
         ### BEGIN YOUR SOLUTION
         # raise NotImplementedError()
-        return (ops.logsumexp(logits, axes = (1,)) - (logits * init.one_hot(logits.shape[1], y)).sum(axes = 1)).sum() / y.shape[0]
+        return (ops.logsumexp(logits, axes = (1,)) - (logits * init.one_hot(logits.shape[1], y, device=logits.device)).sum(axes = (1,))).sum() / y.shape[0]
         ### END YOUR SOLUTION
 
 
@@ -166,12 +166,12 @@ class BatchNorm1d(Module):
             return self.weight.broadcast_to(x.shape) * (x - self.running_mean.broadcast_to(x.shape)) / (
                         (self.running_var + self.eps) ** 0.5).broadcast_to(x.shape) + self.bias.broadcast_to(x.shape)
         e_x = x.sum(axes = (0,)) / x.shape[0]
-        diff = x - e_x.broadcast_to(x.shape)
+        diff = x - e_x.reshape((1, x.shape[1])).broadcast_to(x.shape)
         var = (diff**2).sum(axes = (0,)) / x.shape[0]
         denominator = (var + self.eps)**0.5
         self.running_mean = (1 - self.momentum) * self.running_mean + self.momentum * e_x
         self.running_var = (1 - self.momentum) * self.running_var + self.momentum * var
-        return (self.weight / denominator).broadcast_to(x.shape) * diff  + self.bias.broadcast_to(x.shape)
+        return (self.weight / denominator).reshape((1, x.shape[1])).broadcast_to(x.shape) * diff  + self.bias.reshape((1, x.shape[1])).broadcast_to(x.shape)
         ### END YOUR SOLUTION
 
 class BatchNorm2d(BatchNorm1d):

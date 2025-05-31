@@ -57,7 +57,7 @@ class LogSumExp(TensorOp):
         axes = self.axes or range(len(z.shape))
         new_shape = [1 if i in axes else dim for i, dim in enumerate(z.shape)]
         max_z = z.realize_cached_data().max(axis=self.axes)
-        exp_z = exp(z - Tensor(max_z).reshape(new_shape).broadcast_to(z.shape))
+        exp_z = exp(z - Tensor(max_z, device=max_z.device).reshape(new_shape).broadcast_to(z.shape))
         return exp_z * (out_grad / exp_z.sum(axes= self.axes)).reshape(tuple(new_shape)).broadcast_to(z.shape)
         ### END YOUR SOLUTION
 
