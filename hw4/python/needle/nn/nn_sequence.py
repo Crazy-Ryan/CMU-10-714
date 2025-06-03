@@ -38,7 +38,15 @@ class RNNCell(Module):
         """
         super().__init__()
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        # raise NotImplementedError()
+        bound = 1 / hidden_size ** 0.5
+        self.nonlinearity = ops.tanh if nonlinearity == 'tanh' else ops.relu
+        self.W_ih = Parameter(init.rand(input_size, hidden_size, low = -bound, high = bound, device=device))
+        self.W_hh = Parameter(init.rand(hidden_size, hidden_size, low = -bound, high = bound, device=device))
+        self.bias = bias
+        if bias:
+            self.bias_ih = Parameter(init.rand(hidden_size, low = -bound, high = bound, device=device))
+            self.bias_hh = Parameter(init.rand(hidden_size, low = -bound, high = bound, device=device))
         ### END YOUR SOLUTION
 
     def forward(self, X, h=None):
@@ -53,7 +61,13 @@ class RNNCell(Module):
             for each element in the batch.
         """
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        # raise NotImplementedError()
+        res = X @ self.W_ih
+        if h:
+            res += h @ self.W_hh
+        if self.bias:
+            res += (self.bias_ih + self.bias_hh).reshape((1, res.shape[1])).broadcast_to(res.shape)
+        return self.nonlinearity(res)
         ### END YOUR SOLUTION
 
 
@@ -82,7 +96,9 @@ class RNN(Module):
         """
         super().__init__()
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        # raise NotImplementedError()
+        self.rnn_cells = [RNNCell(input_size if ind == 0 else hidden_size, hidden_size, bias, nonlinearity, device ) for ind in range(num_layers) ]
+        self.num_layers = num_layers
         ### END YOUR SOLUTION
 
     def forward(self, X, h0=None):
@@ -98,7 +114,16 @@ class RNN(Module):
         h_n of shape (num_layers, bs, hidden_size) containing the final hidden state for each element in the batch.
         """
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        # raise NotImplementedError()
+        h_seq = list(ops.split(h0, axis=0)) if h0 is not None else [None] * self.num_layers
+        X_splitted = ops.split(X, axis=0)
+        output = []
+        for seq_ind in range(X.shape[0]):
+            for layer_ind, cell in enumerate(self.rnn_cells):
+                input = X_splitted[seq_ind]  if layer_ind == 0 else h_seq[layer_ind - 1]
+                h_seq[layer_ind] = self.rnn_cells[layer_ind](input, h_seq[layer_ind])
+            output.append(h_seq[-1])
+        return ops.stack(output, axis=0), ops.stack(h_seq, axis=0)
         ### END YOUR SOLUTION
 
 
