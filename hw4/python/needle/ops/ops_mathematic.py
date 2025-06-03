@@ -363,7 +363,7 @@ class ReLU(TensorOp):
     def gradient(self, out_grad, node):
         ### BEGIN YOUR SOLUTION
         # raise NotImplementedError()
-        return out_grad * (relu(node.inputs[0]) / node.inputs[0])
+        return out_grad * Tensor(numpy.greater(node.inputs[0].numpy(), 0), device=out_grad.device)
         ### END YOUR SOLUTION
 
 
