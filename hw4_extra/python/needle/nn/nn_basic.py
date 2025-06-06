@@ -219,7 +219,7 @@ class Dropout(Module):
         # raise NotImplementedError()
         if not self.training:
             return x
-        return x * init.randb(*x.shape, p = 1 - self.p) / Tensor(1 - self.p)
+        return x * init.randb(*x.shape, p = 1 - self.p, dtype='float32') / (1 - self.p)
         ### END YOUR SOLUTION
 
 

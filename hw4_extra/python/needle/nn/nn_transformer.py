@@ -108,7 +108,13 @@ class MultiHeadAttention(Module):
         probs = None
 
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        # raise NotImplementedError()
+        # probs = self.dropout(self.softmax(mask * self.matmul(q, k) / Tensor(q_dim ** 0.5, device=self.device)))
+        temp = self.matmul(q, k) / q_dim ** 0.5
+        if self.causal:
+            temp += Tensor(self.create_causal_mask(queries_len, queries_len, device=self.device), device=self.device).broadcast_to((batch_size, num_head, queries_len, queries_len))
+        probs = self.dropout(self.softmax(temp))
+        result = self.matmul(probs, v.transpose())
         ### END YOUR SOLUTION
 
         return result, probs
