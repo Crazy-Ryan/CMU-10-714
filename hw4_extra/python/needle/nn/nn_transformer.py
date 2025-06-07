@@ -1,4 +1,6 @@
 from typing import List
+import sys
+sys.path.append('./python')
 from needle.autograd import Tensor
 import needle.backend_ndarray.ndarray as ndarray
 from needle import ops
@@ -6,8 +8,8 @@ import needle.init as init
 import numpy as np
 from .nn_sequence import Embedding
 from .nn_basic import (
-    Parameter, 
-    Module, 
+    Parameter,
+    Module,
     ReLU,
     Dropout,
     LayerNorm1d,
@@ -69,7 +71,7 @@ class MultiHeadAttention(Module):
 
     def softmax(self, logit):
         """
-        The softmax function; 
+        The softmax function;
         """
         max_val = Tensor(
             logit.realize_cached_data().max(axis=3),
@@ -165,7 +167,7 @@ class AttentionLayer(Module):
             v_features, device=device, dtype=dtype)
 
         inner_dim = num_head * dim_head
-        
+
         self.q_projection = Linear(
             q_features, inner_dim, bias=False,
             device=device, dtype=dtype)
@@ -208,7 +210,15 @@ class AttentionLayer(Module):
         result = None
 
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        # raise NotImplementedError()
+        q_prime = self.q_projection(self.prenorm_q(q.reshape((batch_size * queries_len, q_dim)))).reshape((batch_size, queries_len, self.num_head, self.dim_head)).transpose((1, 2))
+        k_prime = self.k_projection(self.prenorm_k(k.reshape((batch_size * queries_len, q_dim)))).reshape((batch_size, queries_len, self.num_head, self.dim_head)).transpose((1, 2))
+        v_prime = self.v_projection(self.prenorm_v(v.reshape((batch_size * queries_len, q_dim)))).reshape((batch_size, queries_len, self.num_head, self.dim_head)).transpose((1, 2))
+        # x, _ = self.attn(q_prime, k_prime, v_prime)
+        x, self.probs = self.attn(q_prime, k_prime, v_prime)
+
+        x = x.transpose((1, 2)).reshape((batch_size * queries_len, self.num_head * self.dim_head))
+        result = self.out_projection(x).reshape((batch_size, queries_len, self.out_features))
         ### END YOUR SOLUTION
 
         return result
@@ -263,7 +273,7 @@ class Transformer(Module):
         self,
         embedding_size: int,
         hidden_size: int,
-        num_layers: int, 
+        num_layers: int,
         *,
         num_head: int = 8,
         dim_head: int = 32,

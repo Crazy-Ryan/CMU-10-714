@@ -98,7 +98,7 @@ class Linear(Module):
         ### BEGIN YOUR SOLUTION
         # raise NotImplementedError()
         res = X.matmul(self.weight)
-        if self.bias:
+        if 'bias' in self.__dict__:
             res += self.bias.broadcast_to(res.shape)
         return res
         ### END YOUR SOLUTION
@@ -193,8 +193,8 @@ class LayerNorm1d(Module):
         self.eps = eps
         ### BEGIN YOUR SOLUTION
         # raise NotImplementedError()
-        self.weight = Parameter(init.ones(dim, device=device, dtype=dtype, requires_grad=True))
-        self.bias = Parameter(init.zeros(dim, device=device, dtype=dtype, requires_grad=True))
+        self.weight = Parameter(init.ones(1, dim, device=device, dtype=dtype, requires_grad=True))
+        self.bias = Parameter(init.zeros(1, dim, device=device, dtype=dtype, requires_grad=True))
         ### END YOUR SOLUTION
 
     def forward(self, x: Tensor) -> Tensor:
