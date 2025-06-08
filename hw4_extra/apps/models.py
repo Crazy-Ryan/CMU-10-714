@@ -64,10 +64,15 @@ class LanguageModel(nn.Module):
         self.hidden_size = hidden_size
         self.device = device
         self.seq_model_name = seq_model
-        seq_model_class = nn.RNN if seq_model == 'rnn' else nn.LSTM
+        model_name_to_class = {
+            'rnn': nn.RNN,
+            'lstm': nn.LSTM,
+            'transformer': nn.Transformer
+        }
         self.embedding_layer = ndl.nn.Embedding(output_size, embedding_size, device=device)
-        self.seq_model = seq_model_class(embedding_size, hidden_size, num_layers, device=device)
-        self.linear = nn.Linear(hidden_size, output_size, device=device)
+        self.seq_model = model_name_to_class[seq_model](embedding_size, hidden_size, num_layers, device=device)
+        linear_first_dim = embedding_size if seq_model == 'transformer' else hidden_size
+        self.linear = nn.Linear(linear_first_dim, output_size, device=device)
         ### END YOUR SOLUTION
 
     def forward(self, x, h=None):
@@ -86,8 +91,8 @@ class LanguageModel(nn.Module):
         ### BEGIN YOUR SOLUTION
         # raise NotImplementedError()
         seq_len, bs = x.shape
-        num_layers = self.seq_model.num_layers
-        if h is None:
+        if h is None and self.seq_model_name != 'transformer':
+            num_layers = self.seq_model.num_layers
             if self.seq_model_name == 'rnn':
                 h_ = ndl.init.zeros(num_layers, bs, self.hidden_size, device=self.device)
             else:
@@ -96,8 +101,7 @@ class LanguageModel(nn.Module):
         else:
             h_ = h
         seq_h, h_final = self.seq_model(self.embedding_layer(x), h_)
-        hidden_size = seq_h.shape[2]
-        return self.linear(seq_h.reshape((seq_len*bs, hidden_size))).reshape((seq_len*bs, self.output_size)), h_final
+        return self.linear(seq_h.reshape((seq_len*bs, seq_h.shape[2]))).reshape((seq_len*bs, self.output_size)), h_final
         ### END YOUR SOLUTION
 
 
