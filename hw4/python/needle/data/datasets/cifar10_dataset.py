@@ -26,13 +26,13 @@ class CIFAR10Dataset(Dataset):
         self.transforms = transforms
         images = []
         labels = []
-        for filename in os.listdir(base_folder):
-            if filename.startswith('data_batch' if train else 'test_batch'):
-                full_path = os.path.join(base_folder, filename)
-                with open(full_path, 'rb') as fo:
-                    dict = pickle.load(fo, encoding='bytes')
-                    images.append(dict[b'data']/255)
-                    labels.append(np.array(dict[b'labels']))
+        data_batch_files = [f'data_batch_{i}' for i in range(1, 6)] if train else ['test_batch']
+        for filename in data_batch_files:
+            full_path = os.path.join(base_folder, filename)
+            with open(full_path, 'rb') as fo:
+                dict = pickle.load(fo, encoding='bytes')
+                images.append(dict[b'data']/255)
+                labels.append(np.array(dict[b'labels']))
         self.X = np.concatenate(images, axis=0)
         self.y = np.concatenate(labels, axis=0)
         ### END YOUR SOLUTION
