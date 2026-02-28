@@ -11,4 +11,4 @@ On **current(main)** branch, the implementation is based on the **24 Fall** offe
 - hw4_extra: [#454165](https://github.com/dlsyscourse/hw4_extra/commit/4541659c94b54a2036315ad58598b631d6e8f279)
 
 ## 25 Fall
-The **25 Fall** class is on-going and the corresponding implementations of released assignments can be found under the [25Fall](https://github.com/Crazy-Ryan/CMU-10-714/tree/25fall) branch 
+The implementation based on the **25 Fall** offering can be found under the [25Fall](https://github.com/Crazy-Ryan/CMU-10-714/tree/25fall) branch 
