@@ -12,3 +12,6 @@ On **current(main)** branch, the implementation is based on the **24 Fall** offe
 
 ## 25 Fall
 The implementation based on the **25 Fall** offering can be found under the [25Fall](https://github.com/Crazy-Ryan/CMU-10-714/tree/25fall) branch 
+
+## 26 Fall
+The implementation based on the **26 Fall** offering can be found under the [26fall](https://github.com/Crazy-Ryan/CMU-10-714/tree/26fall) branch
